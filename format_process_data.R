@@ -3,8 +3,13 @@ library(dplyr)
 library(tidyr)
 library(readxl)
 library(lubridate)
+library(plotly)
+library(heatmaply)
+library(qgraph)
+library(highcharter)
+library(dygraphs)
 
-setwd('/home/toshi/Desktop/work_butanta/dashboard_precipitacao/')
+setwd('/home/davi/Desktop/dashboard_precipitacao/')
 
 raw_data <- read_excel(path = 'tabela_precipitacao_tome_acu.xlsx')
 raw_data <- as.data.frame(raw_data)
@@ -94,11 +99,41 @@ raw_data_gather %>%
     geom_boxplot()
 
 
-preciptation_per_month_per_rain_days %>%
-    spread(year, days_rain_month, mean_precip_in_rain_days)
+hclust_df <- preciptation_per_month_per_rain_days %>%
+    mutate(var = paste(year, month, sep = '_')) %>%
+    ungroup() %>%
+    select(days_rain_month, mean_precip_in_rain_days, var) %>%
+    as.data.frame()
+
+rownames(hclust_df) <- hclust_df$var
+
+hclust_df <- hclust_df[ ,c(1,2)]
+
+boxplot(hclust_df[ ,1])
+boxplot(hclust_df[ ,2]) # Remover o outlier, esta causando problema!
+
+hclust_df <- subset(hclust_df, hclust_df[,2] < max(hclust_df[,2]))
 
 # scale data to mean=0, sd=1 and convert to matrix
-mtscaled <- as.matrix(scale(mtcars))
+hclust_df_scaled <- as.matrix(scale(hclust_df))
 
-# create heatmap and don't reorder columns
-heatmap(mtscaled, Colv=F, scale='none')
+heatmaply(t(hclust_df_scaled), k_col = 10 )
+
+# hclust
+hclust_obj <- hclust(dist(hclust_df_scaled))
+hclust_obj
+
+highchart() %>% 
+hc_xAxis(categories = preciptation_per_month_per_rain_days$year) 
+
+    hc_add_serie(name = "Tokyo", data = citytemp$tokyo) %>% 
+    hc_add_serie(name = "London", data = citytemp$london)
+
+    
+library(dygraphs)
+    
+    preciptation_per_month_per_rain_days %>%
+        ungroup() %>%
+        select(year, month, mean_precip_in_rain_days) %>%
+        spread(year, mean_precip_in_rain_days)
+
