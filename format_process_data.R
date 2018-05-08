@@ -8,8 +8,9 @@ library(heatmaply)
 library(qgraph)
 library(highcharter)
 library(dygraphs)
+library(d3heatmap)
 
-setwd('/home/davi/Desktop/dashboard_precipitacao/')
+setwd('/home/toshi/Desktop/work_butanta/dashboard_precipitacao/')
 
 raw_data <- read_excel(path = 'tabela_precipitacao_tome_acu.xlsx')
 raw_data <- as.data.frame(raw_data)
@@ -119,21 +120,53 @@ hclust_df_scaled <- as.matrix(scale(hclust_df))
 
 heatmaply(t(hclust_df_scaled), k_col = 10 )
 
-# hclust
-hclust_obj <- hclust(dist(hclust_df_scaled))
-hclust_obj
+d3heatmap(hclust_df, scale="column", colors="Blues")
 
-highchart() %>% 
-hc_xAxis(categories = preciptation_per_month_per_rain_days$year) 
-
-    hc_add_serie(name = "Tokyo", data = citytemp$tokyo) %>% 
-    hc_add_serie(name = "London", data = citytemp$london)
-
+    
     
 library(dygraphs)
-    
-    preciptation_per_month_per_rain_days %>%
+library(xts)    
+
+df_dygraph <-  preciptation_per_month_per_rain_days %>%
         ungroup() %>%
         select(year, month, mean_precip_in_rain_days) %>%
         spread(year, mean_precip_in_rain_days)
 
+# df_dygraph <- as.data.frame(df_dygraph)
+
+# df_dygraph <- df_dygraph[ ,-1]
+
+library("viridisLite")
+
+cols <- viridis(3)
+cols <- substr(cols, 0, 7)
+
+m_order <- c(unique(as.character(raw_data_gather$month)))
+# sorting month in correct order
+df_dygraph <- df_dygraph %>%
+    mutate(month = factor(month, levels = m_order)) %>%
+    arrange(factor(month, levels = m_order) )
+
+
+hc <- highchart() %>% 
+    hc_xAxis(categories = df_dygraph$month) %>% 
+    hc_add_series(name = "2001", data = df_dygraph$`2001`) %>% 
+    hc_add_series(name = "2002", data = df_dygraph$`2002`) %>% 
+    hc_add_series(name = "2003", data = df_dygraph$`2003`) %>%
+    hc_add_series(name = "2004", data = df_dygraph$`2004`) %>% 
+    hc_add_series(name = "2005", data = df_dygraph$`2005`) %>% 
+    hc_add_series(name = "2006", data = df_dygraph$`2006`) %>% 
+    hc_add_series(name = "2007", data = df_dygraph$`2007`) %>% 
+    hc_add_series(name = "2008", data = df_dygraph$`2008`) %>% 
+    hc_add_series(name = "2009", data = df_dygraph$`2009`) %>% 
+    hc_add_series(name = "2010", data = df_dygraph$`2010`) %>% 
+    hc_add_series(name = "2011", data = df_dygraph$`2011`) %>% 
+    hc_add_series(name = "2012", data = df_dygraph$`2012`) %>% 
+    hc_add_series(name = "2013", data = df_dygraph$`2013`) %>% 
+    hc_add_series(name = "2014", data = df_dygraph$`2014`) %>% 
+    hc_add_series(name = "2015", data = df_dygraph$`2015`) %>% 
+    hc_add_series(name = "2016", data = df_dygraph$`2016`) 
+
+hc
+
+str(citytemp)
